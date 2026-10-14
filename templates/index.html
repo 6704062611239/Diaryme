@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>Diaryme - สมุดบันทึกประจำวัน</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Kanit', sans-serif; } </style>
+</head>
+<body class="bg-amber-50 min-h-screen text-slate-800">
+
+    <header class="bg-amber-600 text-white shadow-md py-4 mb-8">
+        <div class="max-w-4xl mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+    <img src="/static/logo.svg" alt="Diaryme Logo" class="w-10 h-10 rounded-xl shadow-sm hover:scale-105 transition-transform">
+    <h1 class="text-2xl font-bold tracking-wide">Diaryme</h1>
+</div>
+            <div class="flex items-center gap-4">
+                <span class="text-amber-100 text-sm">{{ user.username }}</span>
+                <a href="/logout" class="bg-amber-700 hover:bg-amber-800 text-xs px-3 py-1.5 rounded-lg text-white transition">ออกจากระบบ</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <!-- ฟอร์มสร้าง/แก้ไขไดอารี่ -->
+        <section class="md:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-amber-100 h-fit">
+            <h2 id="formTitle" class="text-xl font-semibold mb-4 text-amber-800 border-b border-amber-100 pb-2"> เขียนไดอารี่ใหม่</h2>
+            <form id="diaryForm" class="space-y-4">
+                <input type="hidden" id="entryId">
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">หัวข้อเรื่อง</label>
+                    <input type="text" id="title" required class="w-full p-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-amber-500 outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">อารมณ์วันนี้</label>
+                    <select id="mood" class="w-full p-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-amber-500 outline-none text-sm">
+                        <option value="😊 Happy">😊 มีความสุข (Happy)</option>
+                        <option value="😌 Calm">😌 สงบ (Calm)</option>
+                        <option value="😔 Sad">😔 เศร้า (Sad)</option>
+                        <option value="🔥 Energetic">🔥 มีพลัง (Energetic)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-600 mb-1">เรื่องราวของคุณ</label>
+                    <textarea id="content" rows="5" required class="w-full p-2.5 rounded-lg border border-slate-200 focus:ring-2 focus:ring-amber-500 outline-none text-sm"></textarea>
+                </div>
+                <button type="submit" id="submitBtn" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-2.5 rounded-lg transition shadow-sm">
+                    บันทึกไดอารี่
+                </button>
+                <button type="button" id="cancelEditBtn" onclick="resetForm()" class="hidden w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium py-2 rounded-lg transition text-sm">
+                    ยกเลิกการแก้ไข
+                </button>
+            </form>
+        </section>
+
+        <!-- รายการไดอารี่ -->
+        <section class="md:col-span-2">
+            <h2 class="text-xl font-semibold mb-4 text-slate-700">บันทึกของฉัน</h2>
+            <div id="entriesContainer" class="space-y-4">
+                <p class="text-slate-400 text-sm">กำลังโหลดข้อมูล...</p>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        let allEntries = [];
+
+        async function fetchEntries() {
+            const res = await fetch("/entries/");
+            if (res.status === 401) {
+                window.location.href = "/login";
+                return;
+            }
+            allEntries = await res.json();
+            const container = document.getElementById("entriesContainer");
+            
+            if (allEntries.length === 0) {
+                container.innerHTML = `<div class="bg-white p-6 rounded-2xl text-center text-slate-400 border border-slate-100">ยังไม่มีไดอารี่ ลองเขียนอันแรกสิ!</div>`;
+                return;
+            }
+
+            container.innerHTML = allEntries.reverse().map(entry => `
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-bold text-slate-800">${entry.title}</h3>
+                        <span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-medium">${entry.mood}</span>
+                    </div>
+                    <p class="text-slate-600 text-sm whitespace-pre-line mb-4">${entry.content}</p>
+                    <div class="flex justify-between items-center text-xs text-slate-400 border-t border-slate-50 pt-3">
+                        <span>${new Date(entry.created_at).toLocaleDateString('th-TH')}</span>
+                        <div class="space-x-2">
+                            <button onclick="startEdit(${entry.id})" class="text-amber-600 font-medium hover:underline">แก้ไข</button>
+                            <button onclick="deleteEntry(${entry.id})" class="text-red-500 font-medium hover:underline">ลบ</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // เริ่มโหมดแก้ไข
+        function startEdit(id) {
+            const entry = allEntries.find(e => e.id === id);
+            if (!entry) return;
+
+            document.getElementById("entryId").value = entry.id;
+            document.getElementById("title").value = entry.title;
+            document.getElementById("mood").value = entry.mood;
+            document.getElementById("content").value = entry.content;
+
+            document.getElementById("formTitle").innerText = "แก้ไขไดอารี่";
+            document.getElementById("submitBtn").innerText = "อัปเดตบันทึก";
+            document.getElementById("cancelEditBtn").classList.remove("hidden");
+        }
+
+        function resetForm() {
+            document.getElementById("diaryForm").reset();
+            document.getElementById("entryId").value = "";
+            document.getElementById("formTitle").innerText = "เขียนไดอารี่ใหม่";
+            document.getElementById("submitBtn").innerText = "บันทึกไดอารี่";
+            document.getElementById("cancelEditBtn").classList.add("hidden");
+        }
+
+        // บันทึก / อัปเดตข้อมูล
+        document.getElementById("diaryForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const id = document.getElementById("entryId").value;
+            const title = document.getElementById("title").value;
+            const mood = document.getElementById("mood").value;
+            const content = document.getElementById("content").value;
+
+            if (id) {
+                // แก้ไขข้อมูล (PUT)
+                await fetch(`/entries/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title, mood, content })
+                });
+            } else {
+                // เพิ่มข้อมูลใหม่ (POST)
+                await fetch("/entries/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title, mood, content })
+                });
+            }
+
+            resetForm();
+            fetchEntries();
+        });
+
+        // ลบไดอารี่
+        async function deleteEntry(id) {
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบบันทึกนี้?")) {
+                await fetch(`/entries/${id}`, { method: "DELETE" });
+                fetchEntries();
+            }
+        }
+
+        fetchEntries();
+    </script>
+</body>
+</html>

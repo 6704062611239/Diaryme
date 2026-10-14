@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <!-- Cover Gradient -->
+    <linearGradient id="coverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#fef3c7"/>
+    </linearGradient>
+    <!-- Bookmark Gradient -->
+    <linearGradient id="markGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </linearGradient>
+    <!-- Soft Shadow Filter -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#78350f" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Base Circle Background -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)"/>
+
+  <!-- Main Diary Icon with Shadow -->
+  <g filter="url(#shadow)">
+    <!-- Back Pages (Thickness) -->
+    <rect x="138" y="108" width="246" height="306" rx="20" fill="#fde68a"/>
+    <!-- Diary Cover Front -->
+    <rect x="128" y="98" width="246" height="306" rx="20" fill="url(#coverGrad)"/>
+    
+    <!-- Spine Line -->
+    <line x1="168" y1="98" x2="168" y2="404" stroke="#f59e0b" stroke-width="3" stroke-dasharray="6 6" opacity="0.6"/>
+
+    <!-- Bookmark Ribbon -->
+    <path d="M 280 98 L 310 98 L 310 230 L 295 210 L 280 230 Z" fill="url(#markGrad)"/>
+
+    <!-- Pen / Pencil Line Accent -->
+    <rect x="198" y="180" width="60" height="12" rx="6" fill="#d97706" opacity="0.8"/>
+    <rect x="198" y="210" width="90" height="12" rx="6" fill="#f59e0b" opacity="0.5"/>
+    <rect x="198" y="240" width="75" height="12" rx="6" fill="#f59e0b" opacity="0.3"/>
+  </g>
+
+  <!-- Sparkles -->
+  <!-- Sparkle Top Right -->
+  <path d="M 390 120 Q 390 145 415 145 Q 390 145 390 170 Q 390 145 365 145 Q 390 145 390 120 Z" fill="#ffffff"/>
+  <!-- Sparkle Bottom Left -->
+  <path d="M 120 370 Q 120 385 135 385 Q 120 385 120 400 Q 120 385 105 385 Q 120 385 120 370 Z" fill="#ffffff" opacity="0.9"/>
+</svg>
